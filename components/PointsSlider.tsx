@@ -1,10 +1,16 @@
 import { useMemo, useRef, useState } from 'react';
-import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { LayoutChangeEvent, PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { colors, fonts, motion, radii, shadows } from '../lib/theme';
 
 const THUMB_SIZE = 28;
 const TRACK_HEIGHT = 8;
+
+// On the web, dragging the thumb is otherwise interpreted by the browser as
+// a back/forward navigation swipe. `touchAction` is a web-only style
+// property, so it's kept out of the native StyleSheet and typed loosely.
+const webNoTouchAction =
+  Platform.OS === 'web' ? ({ touchAction: 'none' } as unknown as Record<string, unknown>) : undefined;
 
 export function PointsSlider({
   value,
@@ -79,7 +85,7 @@ export function PointsSlider({
 
       <View
         ref={trackRef}
-        style={styles.track}
+        style={[styles.track, webNoTouchAction]}
         onLayout={onLayout}
         {...panResponder.panHandlers}
         accessibilityRole="adjustable"
