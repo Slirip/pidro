@@ -10,7 +10,7 @@ import { Header } from '../components/Header';
 import { Scoreboard } from '../components/Scoreboard';
 import { TeamSegment } from '../components/TeamSegment';
 import { BidChips } from '../components/BidChips';
-import { PointsStepper } from '../components/PointsStepper';
+import { PointsSlider } from '../components/PointsSlider';
 import { HandLogRow } from '../components/HandLogRow';
 import { InlineConfirm } from '../components/InlineConfirm';
 import { WinOverlay } from '../components/WinOverlay';
@@ -237,14 +237,18 @@ export default function GameScreen() {
                 </ScalePressable>
               )}
 
-              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Poäng till {bidderName}</Text>
+              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>
+                Poäng till <Text style={{ color: teamColor, textTransform: 'uppercase' }}>{bidderName}</Text>
+              </Text>
               <View style={{ marginTop: 10 }}>
-                <PointsStepper
+                <PointsSlider
                   value={pts}
                   onChange={setPts}
                   min={0}
                   max={TOTAL_POINTS}
                   subLabel={`${otherName} får ${TOTAL_POINTS - pts}p automatiskt`}
+                  teamColor={teamColor}
+                  bidAmount={bidAmount}
                 />
               </View>
             </DimmedSection>
@@ -316,9 +320,9 @@ export default function GameScreen() {
         {win && (
           <WinOverlay
             winner={win.team}
-            winnerName={TEAM_LABELS[win.team]}
             target={TARGET_SCORE}
-            scoreLine={`${TEAM_LABELS.A} ${win.a} – ${win.b} ${TEAM_LABELS.B}`}
+            totalA={win.a}
+            totalB={win.b}
             onNewGame={winNewGame}
             onGoHome={winGoHome}
           />
@@ -378,7 +382,7 @@ const styles = StyleSheet.create({
   checkboxLabel: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.muted, lineHeight: 18 },
   saveButton: {
     width: '100%',
-    marginTop: 18,
+    marginTop: 28,
     backgroundColor: colors.feltGreen,
     borderRadius: radii.button,
     paddingVertical: 16,

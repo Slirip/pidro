@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   cardLeft: { flex: 1, gap: 6 },
   dateLabel: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted },
   pill: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10 },
-  pillLabel: { fontFamily: fonts.bold, fontSize: 12 },
+  pillLabel: { fontFamily: fonts.bold, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.4 },
   score: { fontFamily: fonts.bold, fontSize: 24, fontVariant: ['tabular-nums'] },
   chevron: { color: colors.soft, fontSize: 20 },
 });

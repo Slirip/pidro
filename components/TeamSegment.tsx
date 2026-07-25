@@ -93,5 +93,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: fonts.semibold,
     fontSize: 15,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });

@@ -132,10 +132,10 @@ const styles = StyleSheet.create({
   },
   scoreCol: { flex: 1, alignItems: 'center' },
   divider: { width: 1, height: 44, backgroundColor: colors.cardBorder },
-  colHeader: { fontFamily: fonts.bold, fontSize: 13, letterSpacing: 2 },
+  colHeader: { fontFamily: fonts.bold, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase' },
   teamScore: { fontFamily: fonts.bold, fontSize: 40, lineHeight: 46, color: colors.ink, fontVariant: ['tabular-nums'] },
   banner: { borderRadius: 12, padding: 10, alignItems: 'center' },
-  bannerLabel: { fontFamily: fonts.semibold, fontSize: 14 },
+  bannerLabel: { fontFamily: fonts.semibold, fontSize: 14, textTransform: 'uppercase', letterSpacing: 0.4 },
   sectionTitle: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink, marginHorizontal: 2, marginBottom: 10 },
   table: {
     backgroundColor: colors.card,

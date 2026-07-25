@@ -96,9 +96,6 @@ export function Scoreboard({
           <Text style={[styles.teamName, { color: colors.feltGreen }]}>{nameA}</Text>
           <CountUpScore total={totalA} />
         </View>
-        <View style={styles.targetWrap}>
-          <Text style={styles.targetPill}>först till {target}</Text>
-        </View>
         <View style={styles.col}>
           {flashB && <DeltaChip key={flashB.key} delta={flashB.delta} />}
           <Text style={[styles.teamName, { color: colors.cardRed }]}>{nameB}</Text>
@@ -128,24 +125,13 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center' },
   col: { flex: 1, alignItems: 'center', position: 'relative' },
-  teamName: { fontFamily: fonts.bold, fontSize: 13, letterSpacing: 2 },
+  teamName: { fontFamily: fonts.bold, fontSize: 17, letterSpacing: 2, textTransform: 'uppercase' },
   scoreValue: {
     fontFamily: fonts.bold,
     fontSize: 46,
     lineHeight: 51,
     color: colors.ink,
     fontVariant: ['tabular-nums'],
-  },
-  targetWrap: { paddingHorizontal: 6, alignItems: 'center' },
-  targetPill: {
-    fontFamily: fonts.semibold,
-    fontSize: 11,
-    color: colors.muted,
-    borderWidth: 1,
-    borderColor: colors.controlBorder,
-    borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 9,
   },
   barsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
   barsCol: { flex: 1, gap: 6 },

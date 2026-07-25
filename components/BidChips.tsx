@@ -3,7 +3,7 @@ import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts } from '../lib/theme';
 import { ScalePressable } from './ScalePressable';
 
-const COLUMNS = 5;
+const COLUMNS = 3;
 const GAP = 8;
 
 export function BidChips({

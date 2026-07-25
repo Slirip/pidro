@@ -66,7 +66,9 @@ export default function HomeScreen() {
             >
               <Text style={styles.primaryLabel}>Fortsätt match</Text>
               <Text style={styles.primarySub}>
-                {TEAM_LABELS.A} {activeGame.totalA} – {activeGame.totalB} {TEAM_LABELS.B}
+                <Text style={{ color: colors.sage, textTransform: 'uppercase' }}>{TEAM_LABELS.A}</Text>{' '}
+                {activeGame.totalA} – {activeGame.totalB}{' '}
+                <Text style={{ color: colors.warmCoral, textTransform: 'uppercase' }}>{TEAM_LABELS.B}</Text>
               </Text>
             </ScalePressable>
           )}

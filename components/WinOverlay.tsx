@@ -9,26 +9,27 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { colors, fonts, motion } from '../lib/theme';
-import { TeamId } from '../lib/types';
+import { TEAM_LABELS, TeamId } from '../lib/types';
 import { Confetti } from './Confetti';
 import { ScalePressable } from './ScalePressable';
 
 export function WinOverlay({
   winner,
-  winnerName,
   target,
-  scoreLine,
+  totalA,
+  totalB,
   onNewGame,
   onGoHome,
 }: {
   winner: TeamId;
-  winnerName: string;
   target: number;
-  scoreLine: string;
+  totalA: number;
+  totalB: number;
   onNewGame: () => void;
   onGoHome: () => void;
 }) {
   const reducedMotion = useReducedMotion();
+  const winnerColor = winner === 'A' ? colors.sage : colors.warmCoral;
   const overlayOpacity = useSharedValue(0);
   const popScale = useSharedValue(reducedMotion ? 1 : 0.85);
   const popOpacity = useSharedValue(reducedMotion ? 1 : 0);
@@ -56,9 +57,12 @@ export function WinOverlay({
       <Animated.View style={[styles.content, popStyle]}>
         <Text style={styles.eyebrow}>FÖRST TILL {target}</Text>
         <Text style={styles.headline} numberOfLines={1}>
-          {winnerName} vinner!
+          <Text style={{ color: winnerColor, textTransform: 'uppercase' }}>{TEAM_LABELS[winner]}</Text> vinner!
         </Text>
-        <Text style={styles.scoreLine}>{scoreLine}</Text>
+        <Text style={styles.scoreLine}>
+          <Text style={{ color: colors.sage, textTransform: 'uppercase' }}>{TEAM_LABELS.A}</Text> {totalA} –{' '}
+          {totalB} <Text style={{ color: colors.warmCoral, textTransform: 'uppercase' }}>{TEAM_LABELS.B}</Text>
+        </Text>
         <View style={styles.buttonRow}>
           <ScalePressable
             style={styles.primaryButton}

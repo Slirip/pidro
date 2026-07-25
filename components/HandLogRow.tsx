@@ -29,7 +29,12 @@ export function HandLogRow({ hand, animateIn = false }: { hand: HandRecord; anim
         <Text style={styles.badgeLabel}>{hand.handNumber}</Text>
       </View>
       <View style={styles.bidRow}>
-        <Text style={styles.bidLabel}>{TEAM_LABELS[hand.biddingTeam]} bjöd</Text>
+        <Text style={styles.bidLabel}>
+          <Text style={{ color: hand.biddingTeam === 'A' ? colors.feltGreen : colors.cardRed, textTransform: 'uppercase' }}>
+            {TEAM_LABELS[hand.biddingTeam]}
+          </Text>{' '}
+          bjöd
+        </Text>
         <View style={styles.bidCircle}>
           <Text style={styles.bidCircleLabel}>{hand.bidAmount}</Text>
         </View>
