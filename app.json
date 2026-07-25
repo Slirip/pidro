@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Pidro",
+    "slug": "pidro-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "pidroapp",
+    "newArchEnabled": true,
+    "icon": "./assets/brand/icon.png",
+    "backgroundColor": "#1F5C43",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pidro.app"
+    },
+    "android": {
+      "package": "com.pidro.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/adaptive-icon-foreground.png",
+        "backgroundColor": "#1F5C43"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/brand/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/splash-icon.png",
+          "backgroundColor": "#1F5C43",
+          "imageWidth": 240
+        }
+      ]
+    ]
+  }
+}
