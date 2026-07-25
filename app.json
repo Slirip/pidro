@@ -2,6 +2,7 @@
   "expo": {
     "name": "Pidro",
     "slug": "pidro-app",
+    "owner": "slirip",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -35,6 +36,12 @@
           "imageWidth": 240
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "abf5d375-8a1c-4c15-b4ad-f4e547625363"
+      }
+    }
   }
 }
