@@ -12,7 +12,10 @@
     "backgroundColor": "#1F5C43",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pidro.app"
+      "bundleIdentifier": "com.pidro.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.pidro.app",
