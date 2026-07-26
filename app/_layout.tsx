@@ -52,6 +52,7 @@ export default function RootLayout() {
         <Stack.Screen name="game" />
         <Stack.Screen name="history/index" />
         <Stack.Screen name="history/[id]" />
+        <Stack.Screen name="rules" />
       </Stack>
     </>
   );

@@ -41,7 +41,7 @@ export function HandLogRow({ hand, animateIn = false }: { hand: HandRecord; anim
       </View>
       <View style={[styles.pill, { backgroundColor: madeBid ? colors.successTint : colors.dangerTint }]}>
         <Text style={[styles.pillLabel, { color: madeBid ? colors.feltGreen : colors.cardRed }]}>
-          {madeBid ? 'Klarade' : 'Missade'}
+          {madeBid ? 'Klarade' : 'Håla!'}
         </Text>
       </View>
       <Text style={styles.totals}>

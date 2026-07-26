@@ -94,6 +94,15 @@ export default function HomeScreen() {
           >
             <Text style={styles.secondaryLabel}>Historik</Text>
           </ScalePressable>
+
+          <ScalePressable
+            style={styles.secondaryButton}
+            onPress={() => router.push('/rules')}
+            accessibilityRole="button"
+            accessibilityLabel="Spelregler"
+          >
+            <Text style={styles.secondaryLabel}>Spelregler</Text>
+          </ScalePressable>
         </View>
       </ScreenTransition>
     </SafeAreaView>

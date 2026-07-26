@@ -237,8 +237,6 @@ function WheelColumn({
           ))}
         </ScrollView>
       </View>
-
-      {belowBid && <Text style={styles.holeTag}>Håla!</Text>}
     </View>
   );
 }
@@ -310,16 +308,5 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontFamily: fonts.bold,
     fontVariant: ['tabular-nums'],
-  },
-  holeTag: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: colors.danger,
-    backgroundColor: colors.dangerTint,
-    borderRadius: radii.chip,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    overflow: 'hidden',
-    marginTop: 8,
   },
 });
