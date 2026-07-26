@@ -23,7 +23,11 @@ import { colors, fonts, radii } from '../lib/theme';
 const ITEM_HEIGHT = 44;
 const VISIBLE_ROWS = 5;
 const WHEEL_HEIGHT = ITEM_HEIGHT * VISIBLE_ROWS;
-const SETTLE_DEBOUNCE = 120;
+// How long a wheel must sit still, with no finger on it, before its position
+// is committed. Commits must never happen mid-gesture: correcting the offset
+// while the user is dragging fights the finger, and committing intermediate
+// rows is what let the two complementary wheels trigger each other forever.
+const SETTLE_DEBOUNCE = 140;
 
 // On the web, ScrollView renders as a plain scrollable div. Restricting the
 // gesture to vertical panning (and containing overscroll so dragging past a
@@ -137,18 +141,39 @@ function WheelColumn({
   const internalIndexRef = useRef(value - min);
   const didMountRef = useRef(false);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // touchingRef covers finger-on-wheel (touch events, which also exist on
+  // web); draggingRef covers the native scroll gesture, which on iOS keeps
+  // going after the touch is cancelled in favour of the scroll. While either
+  // is set the wheel belongs to the user: no commits, no programmatic
+  // scrolls.
+  const touchingRef = useRef(false);
+  const draggingRef = useRef(false);
   const reducedMotion = useReducedMotion();
 
   const rowCount = max - min + 1;
   const rowValues = useMemo(() => Array.from({ length: rowCount }, (_, i) => min + i), [rowCount, min]);
 
   useEffect(() => {
-    const index = value - min;
-    if (index === internalIndexRef.current && didMountRef.current) return;
+    const index = clamp(value - min, 0, rowCount - 1);
+    const target = index * ITEM_HEIGHT;
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      internalIndexRef.current = index;
+      scrollY.value = target;
+      scrollRef.current?.scrollTo({ y: target, animated: false });
+      return;
+    }
+    if (index === internalIndexRef.current) return;
     internalIndexRef.current = index;
-    scrollY.value = index * ITEM_HEIGHT;
-    scrollRef.current?.scrollTo({ y: index * ITEM_HEIGHT, animated: didMountRef.current });
-    didMountRef.current = true;
+    // The user's gesture wins over an external value change; their settle
+    // will re-commit and re-sync both wheels anyway.
+    if (touchingRef.current || draggingRef.current) return;
+    clearTimeout(settleTimerRef.current);
+    scrollY.value = target;
+    // Never animated: an animated sync emits scroll events that can commit
+    // intermediate rows, which is how the two wheels used to feed back into
+    // each other until the app locked up.
+    scrollRef.current?.scrollTo({ y: target, animated: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, min]);
 
@@ -158,24 +183,67 @@ function WheelColumn({
     const index = clamp(Math.round(offsetY / ITEM_HEIGHT), 0, rowCount - 1);
     const target = index * ITEM_HEIGHT;
     if (Math.abs(offsetY - target) > 0.5) {
-      scrollRef.current?.scrollTo({ y: target, animated: true });
+      // Non-animated on purpose: on native, snapToInterval already animates
+      // the wheel onto a row, so this only cleans up sub-row drift; on web,
+      // browsers silently drop smooth scrolls in background tabs, which
+      // would leave the wheel resting between two rows.
+      scrollRef.current?.scrollTo({ y: target, animated: false });
+      scrollY.value = target;
     }
     if (index !== internalIndexRef.current) {
       internalIndexRef.current = index;
       onChange(min + index);
     }
+    // Failsafe: if a touchend was ever swallowed, the parent's scroll lock
+    // must still release once the wheel settles.
+    onInteractionEnd?.();
+  };
+
+  const scheduleSettle = () => {
+    clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(() => {
+      if (touchingRef.current || draggingRef.current) return;
+      commitFromOffset(scrollY.value);
+    }, SETTLE_DEBOUNCE);
   };
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetY = e.nativeEvent.contentOffset.y;
-    scrollY.value = offsetY;
-    clearTimeout(settleTimerRef.current);
-    settleTimerRef.current = setTimeout(() => commitFromOffset(offsetY), SETTLE_DEBOUNCE);
+    scrollY.value = e.nativeEvent.contentOffset.y;
+    if (!touchingRef.current && !draggingRef.current) scheduleSettle();
   };
 
-  const handleSettle = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleTouchStart = () => {
+    touchingRef.current = true;
     clearTimeout(settleTimerRef.current);
-    commitFromOffset(e.nativeEvent.contentOffset.y);
+    onInteractionStart?.();
+  };
+
+  const handleTouchEnd = () => {
+    touchingRef.current = false;
+    scheduleSettle();
+    onInteractionEnd?.();
+  };
+
+  const handleScrollBeginDrag = () => {
+    draggingRef.current = true;
+    clearTimeout(settleTimerRef.current);
+    onInteractionStart?.();
+  };
+
+  const handleScrollEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    draggingRef.current = false;
+    scrollY.value = e.nativeEvent.contentOffset.y;
+    // Momentum may still follow; the trailing settle (re-armed by each
+    // momentum scroll event) or onMomentumScrollEnd does the commit.
+    scheduleSettle();
+    onInteractionEnd?.();
+  };
+
+  const handleMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    draggingRef.current = false;
+    clearTimeout(settleTimerRef.current);
+    scrollY.value = e.nativeEvent.contentOffset.y;
+    if (!touchingRef.current) commitFromOffset(e.nativeEvent.contentOffset.y);
   };
 
   const emphasisProgress = useSharedValue(emphasized ? 1 : 0);
@@ -207,12 +275,13 @@ function WheelColumn({
           decelerationRate="fast"
           scrollEventThrottle={16}
           nestedScrollEnabled
-          onTouchStart={onInteractionStart}
-          onTouchEnd={onInteractionEnd}
-          onTouchCancel={onInteractionEnd}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
           onScroll={handleScroll}
-          onMomentumScrollEnd={handleSettle}
-          onScrollEndDrag={handleSettle}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          onScrollEndDrag={handleScrollEndDrag}
+          onMomentumScrollEnd={handleMomentumEnd}
           accessibilityRole="adjustable"
           accessibilityLabel={accessibilityLabel}
           accessibilityValue={{ min, max, now: value }}
