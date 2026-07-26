@@ -32,6 +32,7 @@ export default function GameScreen() {
   const [flashB, setFlashB] = useState<Flash>(null);
   const [confirming, setConfirming] = useState<Confirming>(null);
   const [win, setWin] = useState<WinState>(null);
+  const [wheelActive, setWheelActive] = useState(false);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const winTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -183,7 +184,7 @@ export default function GameScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ header: () => <Header showBack onBack={() => router.back()} rightPill={`Giv ${handNo}`} /> }} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} scrollEnabled={!wheelActive}>
         <ScreenTransition>
           <Scoreboard
             nameA={TEAM_LABELS.A}
@@ -252,6 +253,8 @@ export default function GameScreen() {
                   bidAmount={bidAmount}
                   nameA={TEAM_LABELS.A}
                   nameB={TEAM_LABELS.B}
+                  onInteractionStart={() => setWheelActive(true)}
+                  onInteractionEnd={() => setWheelActive(false)}
                 />
               </View>
             </DimmedSection>

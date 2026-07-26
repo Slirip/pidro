@@ -49,6 +49,12 @@ export interface PointsWheelPairProps {
   bidAmount: number | null;
   nameA: string;
   nameB: string;
+  // Fired while a finger is down on either wheel so the caller can suspend
+  // an enclosing ScrollView's own scrolling. On native, a vertical
+  // ScrollView nested inside another vertical ScrollView otherwise lets the
+  // outer one join the drag, so touching a wheel scrolls the whole screen.
+  onInteractionStart?: () => void;
+  onInteractionEnd?: () => void;
 }
 
 export function PointsWheelPair({
@@ -62,6 +68,8 @@ export function PointsWheelPair({
   bidAmount,
   nameA,
   nameB,
+  onInteractionStart,
+  onInteractionEnd,
 }: PointsWheelPairProps) {
   return (
     <View style={styles.row}>
@@ -76,6 +84,8 @@ export function PointsWheelPair({
         emphasized={biddingTeam !== 'B'}
         belowBid={biddingTeam !== 'B' && bidAmount != null && pointsA < bidAmount}
         accessibilityLabel={`Poäng till ${nameA}`}
+        onInteractionStart={onInteractionStart}
+        onInteractionEnd={onInteractionEnd}
       />
       <WheelColumn
         value={pointsB}
@@ -88,6 +98,8 @@ export function PointsWheelPair({
         emphasized={biddingTeam === 'B'}
         belowBid={biddingTeam === 'B' && bidAmount != null && pointsB < bidAmount}
         accessibilityLabel={`Poäng till ${nameB}`}
+        onInteractionStart={onInteractionStart}
+        onInteractionEnd={onInteractionEnd}
       />
     </View>
   );
@@ -104,6 +116,8 @@ function WheelColumn({
   emphasized,
   belowBid,
   accessibilityLabel,
+  onInteractionStart,
+  onInteractionEnd,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -115,6 +129,8 @@ function WheelColumn({
   emphasized: boolean;
   belowBid: boolean;
   accessibilityLabel: string;
+  onInteractionStart?: () => void;
+  onInteractionEnd?: () => void;
 }) {
   const scrollRef = useRef<ScrollView>(null);
   const scrollY = useSharedValue((value - min) * ITEM_HEIGHT);
@@ -190,6 +206,10 @@ function WheelColumn({
           snapToInterval={ITEM_HEIGHT}
           decelerationRate="fast"
           scrollEventThrottle={16}
+          nestedScrollEnabled
+          onTouchStart={onInteractionStart}
+          onTouchEnd={onInteractionEnd}
+          onTouchCancel={onInteractionEnd}
           onScroll={handleScroll}
           onMomentumScrollEnd={handleSettle}
           onScrollEndDrag={handleSettle}
