@@ -11,6 +11,7 @@ import { Header } from '../components/Header';
 import { Scoreboard } from '../components/Scoreboard';
 import { TeamSegment } from '../components/TeamSegment';
 import { BidChips } from '../components/BidChips';
+import { Tabs } from '../components/Tabs';
 import { PointsWheelPair } from '../components/PointsWheelPair';
 import { HandLogRow } from '../components/HandLogRow';
 import { InlineConfirm } from '../components/InlineConfirm';
@@ -22,14 +23,17 @@ import { ScreenTransition } from '../components/ScreenTransition';
 type Flash = { key: number; delta: number } | null;
 type Confirming = 'undo' | 'abandon' | null;
 type WinState = { team: TeamId; a: number; b: number } | null;
+type ScreenTab = 'round' | 'history';
 
 export default function GameScreen() {
   const router = useRouter();
   const [game, setGame] = useState<Game | null>(null);
   const [biddingTeam, setBiddingTeam] = useState<TeamId | null>(null);
   const [bidAmount, setBidAmount] = useState<number | null>(null);
+  const [bidEditing, setBidEditing] = useState(false);
   const [d14, setD14] = useState(false);
   const [pts, setPts] = useState(0);
+  const [activeTab, setActiveTab] = useState<ScreenTab>('round');
   const [flashA, setFlashA] = useState<Flash>(null);
   const [flashB, setFlashB] = useState<Flash>(null);
   const [confirming, setConfirming] = useState<Confirming>(null);
@@ -78,6 +82,7 @@ export default function GameScreen() {
   const resetHandForm = () => {
     setBiddingTeam(null);
     setBidAmount(null);
+    setBidEditing(false);
     setD14(false);
     setPts(0);
   };
@@ -125,6 +130,7 @@ export default function GameScreen() {
     toastTimer.current = setTimeout(() => setSavedToast(null), motion.chipFloat);
 
     scrollRef.current?.scrollTo({ y: 0, animated: true });
+    setActiveTab('round');
 
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -212,107 +218,141 @@ export default function GameScreen() {
             flashB={flashB}
           />
 
-          <View style={styles.formCard}>
-            <View style={styles.sectionTitleRow}>
-              <Text style={styles.sectionTitle}>Vem bjöd?</Text>
-              <Text style={styles.sectionTitleMuted}>Giv {handNo}</Text>
-            </View>
-            <TeamSegment value={biddingTeam} onChange={setBiddingTeam} nameA={TEAM_LABELS.A} nameB={TEAM_LABELS.B} />
-
-            <DimmedSection active={!!biddingTeam}>
-              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Bud</Text>
-              <View style={{ marginTop: 10 }}>
-                <BidChips
-                  value={bidAmount}
-                  onChange={(n) => {
-                    setBidAmount(n);
-                    setD14(n === 14 ? d14 : false);
-                  }}
-                  min={MIN_BID}
-                  max={MAX_BID}
-                  teamColor={teamColor}
-                />
-              </View>
-
-              {bidAmount === 14 && (
-                <ScalePressable
-                  style={styles.checkboxRow}
-                  onPress={() => setD14((v) => !v)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: d14 }}
-                  accessibilityLabel="Given tog 14 över någon annans 14-bud"
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      { backgroundColor: d14 ? colors.cardRed : colors.inset, borderColor: d14 ? colors.cardRed : '#D8CFBB' },
-                    ]}
-                  >
-                    {d14 && <Text style={styles.checkboxMark}>✓</Text>}
-                  </View>
-                  <Text style={styles.checkboxLabel}>
-                    Given tog 14 över någon annans 14-bud (miss ger −28)
-                  </Text>
-                </ScalePressable>
-              )}
-
-              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Poäng</Text>
-              <View style={{ marginTop: 10 }}>
-                <PointsWheelPair
-                  pointsA={pointsA}
-                  pointsB={pointsB}
-                  onChangeA={onChangePointsA}
-                  onChangeB={onChangePointsB}
-                  min={0}
-                  max={TOTAL_POINTS}
-                  biddingTeam={biddingTeam}
-                  bidAmount={bidAmount}
-                  nameA={TEAM_LABELS.A}
-                  nameB={TEAM_LABELS.B}
-                  onInteractionStart={() => setWheelActive(true)}
-                  onInteractionEnd={() => setWheelActive(false)}
-                />
-              </View>
-            </DimmedSection>
-
-            <ScalePressable
-              style={[styles.saveButton, !canSave && { opacity: 0.45 }]}
-              disabled={!canSave}
-              onPress={saveHand}
-              accessibilityRole="button"
-              accessibilityLabel="Spara giv"
-            >
-              <Text style={styles.saveButtonLabel}>Spara giv</Text>
-            </ScalePressable>
+          <View style={styles.tabsWrap}>
+            <Tabs
+              tabs={[
+                { key: 'round', label: `Giv ${handNo}` },
+                { key: 'history', label: game.hands.length ? `Historik (${game.hands.length})` : 'Historik' },
+              ]}
+              value={activeTab}
+              onChange={setActiveTab}
+            />
           </View>
 
-          {game.hands.length > 0 && (
-            <View style={styles.logSection}>
-              <View style={styles.logHeaderRow}>
-                <Text style={styles.sectionTitle}>Givhistorik</Text>
-                {confirming !== 'undo' ? (
+          {activeTab === 'round' ? (
+            <View style={styles.formCard}>
+              <Text style={styles.sectionTitle}>Vem bjöd?</Text>
+              <View style={{ marginTop: 10 }}>
+                <TeamSegment value={biddingTeam} onChange={setBiddingTeam} nameA={TEAM_LABELS.A} nameB={TEAM_LABELS.B} />
+              </View>
+
+              <DimmedSection active={!!biddingTeam}>
+                <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Bud</Text>
+                <View style={{ marginTop: 10 }}>
+                  {bidAmount == null || bidEditing ? (
+                    <BidChips
+                      value={bidAmount}
+                      onChange={(n) => {
+                        setBidAmount(n);
+                        setD14(n === 14 ? d14 : false);
+                        setBidEditing(false);
+                      }}
+                      min={MIN_BID}
+                      max={MAX_BID}
+                      teamColor={teamColor}
+                    />
+                  ) : (
+                    <View style={styles.bidSummaryRow}>
+                      <View style={[styles.bidSummaryValue, { backgroundColor: teamColor }]}>
+                        <Text style={styles.bidSummaryValueLabel}>{bidAmount}</Text>
+                      </View>
+                      <Text style={styles.bidSummaryLabel}>Bud</Text>
+                      <ScalePressable
+                        style={styles.bidEditButton}
+                        onPress={() => setBidEditing(true)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Ändra bud"
+                      >
+                        <Text style={styles.bidEditLabel}>Ändra</Text>
+                      </ScalePressable>
+                    </View>
+                  )}
+                </View>
+
+                {bidAmount === 14 && (
                   <ScalePressable
-                    hitSlop={8}
-                    onPress={() => setConfirming('undo')}
-                    accessibilityRole="button"
-                    accessibilityLabel="Ångra senaste giv"
+                    style={styles.checkboxRow}
+                    onPress={() => setD14((v) => !v)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: d14 }}
+                    accessibilityLabel="Given tog 14 över någon annans 14-bud"
                   >
-                    <Text style={styles.undoLink}>Ångra senaste</Text>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        { backgroundColor: d14 ? colors.cardRed : colors.inset, borderColor: d14 ? colors.cardRed : '#D8CFBB' },
+                      ]}
+                    >
+                      {d14 && <Text style={styles.checkboxMark}>✓</Text>}
+                    </View>
+                    <Text style={styles.checkboxLabel}>
+                      Given tog 14 över någon annans 14-bud (miss ger −28)
+                    </Text>
                   </ScalePressable>
-                ) : (
-                  <InlineConfirm
-                    message="Säker?"
-                    confirmLabel="Ångra"
-                    onConfirm={doUndo}
-                    onCancel={() => setConfirming(null)}
-                  />
                 )}
-              </View>
-              <View style={styles.table}>
-                {[...game.hands].reverse().map((hand, i) => (
-                  <HandLogRow key={hand.id} hand={hand} animateIn={i === 0} />
-                ))}
-              </View>
+
+                <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Poäng</Text>
+                <View style={{ marginTop: 10 }}>
+                  <PointsWheelPair
+                    pointsA={pointsA}
+                    pointsB={pointsB}
+                    onChangeA={onChangePointsA}
+                    onChangeB={onChangePointsB}
+                    min={0}
+                    max={TOTAL_POINTS}
+                    biddingTeam={biddingTeam}
+                    bidAmount={bidAmount}
+                    nameA={TEAM_LABELS.A}
+                    nameB={TEAM_LABELS.B}
+                    onInteractionStart={() => setWheelActive(true)}
+                    onInteractionEnd={() => setWheelActive(false)}
+                  />
+                </View>
+              </DimmedSection>
+
+              <ScalePressable
+                style={[styles.saveButton, !canSave && { opacity: 0.45 }]}
+                disabled={!canSave}
+                onPress={saveHand}
+                accessibilityRole="button"
+                accessibilityLabel="Spara giv"
+              >
+                <Text style={styles.saveButtonLabel}>Spara giv</Text>
+              </ScalePressable>
+            </View>
+          ) : (
+            <View style={styles.logSection}>
+              {game.hands.length > 0 && (
+                <View style={styles.logHeaderRow}>
+                  {confirming !== 'undo' ? (
+                    <ScalePressable
+                      hitSlop={8}
+                      onPress={() => setConfirming('undo')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Ångra senaste giv"
+                    >
+                      <Text style={styles.undoLink}>Ångra senaste</Text>
+                    </ScalePressable>
+                  ) : (
+                    <InlineConfirm
+                      message="Säker?"
+                      confirmLabel="Ångra"
+                      onConfirm={doUndo}
+                      onCancel={() => setConfirming(null)}
+                    />
+                  )}
+                </View>
+              )}
+              {game.hands.length > 0 ? (
+                <View style={styles.table}>
+                  {[...game.hands].reverse().map((hand, i) => (
+                    <HandLogRow key={hand.id} hand={hand} animateIn={i === 0} />
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.emptyHistory}>Inga givar sparade än.</Text>
+              )}
             </View>
           )}
 
@@ -376,23 +416,36 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   loading: { color: colors.muted, textAlign: 'center', marginTop: 40, fontFamily: fonts.medium },
   scroll: { padding: 16, paddingBottom: 40 },
+  tabsWrap: { marginTop: 14 },
   formCard: {
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: radii.cardLg,
     padding: 18,
-    marginTop: 14,
+    marginTop: 10,
     ...shadows.card,
   },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
   sectionTitle: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
-  sectionTitleMuted: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted },
+  bidSummaryRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  bidSummaryValue: {
+    width: 44,
+    height: 44,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bidSummaryValueLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.cream },
+  bidSummaryLabel: { flex: 1, fontFamily: fonts.medium, fontSize: 14, color: colors.muted },
+  bidEditButton: {
+    borderWidth: 1,
+    borderColor: colors.controlBorder,
+    backgroundColor: colors.inset,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  bidEditLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
   checkbox: {
     width: 22,
@@ -414,10 +467,10 @@ const styles = StyleSheet.create({
     ...shadows.primaryButton,
   },
   saveButtonLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.cream },
-  logSection: { marginTop: 14 },
+  logSection: { marginTop: 10 },
   logHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginHorizontal: 2,
     marginBottom: 10,
@@ -430,6 +483,13 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     overflow: 'hidden',
     ...shadows.card,
+  },
+  emptyHistory: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: colors.muted,
+    textAlign: 'center',
+    paddingVertical: 28,
   },
   abandonWrap: { marginTop: 8, alignItems: 'center' },
   abandonLabel: {
