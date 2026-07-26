@@ -1,3 +1,35 @@
+# Integritetspolicy för Pidro
+
+_Senast uppdaterad: 2026-07-25_
+
+Pidro är en app för att hålla poäng i kortspelet Pidro. Denna policy förklarar hur appen hanterar din information.
+
+## Datainsamling
+
+Pidro samlar inte in, överför eller delar någon personlig data. Appen har ingen backend-server, ingen analys, ingen reklam och ingen nätverksåtkomst av något slag.
+
+## Datalagring
+
+All speldata — aktiva matcher, poäng och matchhistorik — lagras lokalt på din enhet med standardlagring på enheten (AsyncStorage). Denna data lämnar aldrig din enhet, överförs aldrig någonstans och är endast tillgänglig för dig. Om du raderar appen raderas denna data.
+
+## Tredje part
+
+Pidro integrerar inte med några tredjepartstjänster, SDK:er eller spårare.
+
+## Barns integritet
+
+Eftersom Pidro inte samlar in någon data alls, samlar appen inte medvetet in data från barn eller någon annan.
+
+## Ändringar av denna policy
+
+Om denna policy ändras (till exempel om en framtida version av appen lägger till funktionalitet som involverar datainsamling) kommer denna sida att uppdateras i enlighet med detta.
+
+## Kontakt
+
+Frågor om denna policy kan skickas till filip.westergard@gmail.com.
+
+---
+
 # Privacy Policy for Pidro
 
 _Last updated: 2026-07-25_
