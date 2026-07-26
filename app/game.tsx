@@ -10,7 +10,7 @@ import { Header } from '../components/Header';
 import { Scoreboard } from '../components/Scoreboard';
 import { TeamSegment } from '../components/TeamSegment';
 import { BidChips } from '../components/BidChips';
-import { PointsSlider } from '../components/PointsSlider';
+import { PointsWheelPair } from '../components/PointsWheelPair';
 import { HandLogRow } from '../components/HandLogRow';
 import { InlineConfirm } from '../components/InlineConfirm';
 import { WinOverlay } from '../components/WinOverlay';
@@ -175,8 +175,10 @@ export default function GameScreen() {
   const handNo = game.hands.length + 1;
   const canSave = !game.winner && !!biddingTeam && bidAmount != null;
   const teamColor = biddingTeam === 'B' ? colors.cardRed : colors.feltGreen;
-  const bidderName = biddingTeam ? TEAM_LABELS[biddingTeam] : TEAM_LABELS.A;
-  const otherName = biddingTeam === 'B' ? TEAM_LABELS.A : TEAM_LABELS.B;
+  const pointsA = biddingTeam === 'B' ? TOTAL_POINTS - pts : pts;
+  const pointsB = biddingTeam === 'B' ? pts : TOTAL_POINTS - pts;
+  const onChangePointsA = (v: number) => setPts(biddingTeam === 'B' ? TOTAL_POINTS - v : v);
+  const onChangePointsB = (v: number) => setPts(biddingTeam === 'B' ? v : TOTAL_POINTS - v);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -237,18 +239,19 @@ export default function GameScreen() {
                 </ScalePressable>
               )}
 
-              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>
-                Poäng till <Text style={{ color: teamColor, textTransform: 'uppercase' }}>{bidderName}</Text>
-              </Text>
+              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Poäng</Text>
               <View style={{ marginTop: 10 }}>
-                <PointsSlider
-                  value={pts}
-                  onChange={setPts}
+                <PointsWheelPair
+                  pointsA={pointsA}
+                  pointsB={pointsB}
+                  onChangeA={onChangePointsA}
+                  onChangeB={onChangePointsB}
                   min={0}
                   max={TOTAL_POINTS}
-                  subLabel={`${otherName} får ${TOTAL_POINTS - pts}p automatiskt`}
-                  teamColor={teamColor}
+                  biddingTeam={biddingTeam}
                   bidAmount={bidAmount}
+                  nameA={TEAM_LABELS.A}
+                  nameB={TEAM_LABELS.B}
                 />
               </View>
             </DimmedSection>
