@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -26,6 +27,13 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      document.documentElement.style.overscrollBehaviorX = 'none';
+      document.body.style.overscrollBehaviorX = 'none';
+    }
+  }, []);
 
   if (!fontsLoaded) {
     return null;
