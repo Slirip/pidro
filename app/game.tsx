@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import { Modal, Platform, ScrollView, StyleSheet, Text, View, SafeAreaView } from 'react-native';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Game, TEAM_LABELS, TeamId } from '../lib/types';
 import { computeHandResult, MAX_BID, MIN_BID, TARGET_SCORE, TOTAL_POINTS } from '../lib/scoring';
 import { addToHistory, clearActiveGame, generateId, getActiveGame, saveActiveGame } from '../lib/storage';
-import { colors, fonts, radii, shadows } from '../lib/theme';
+import { colors, fonts, motion, radii, shadows } from '../lib/theme';
 import { Header } from '../components/Header';
 import { Scoreboard } from '../components/Scoreboard';
 import { TeamSegment } from '../components/TeamSegment';
@@ -14,6 +15,7 @@ import { PointsWheelPair } from '../components/PointsWheelPair';
 import { HandLogRow } from '../components/HandLogRow';
 import { InlineConfirm } from '../components/InlineConfirm';
 import { WinOverlay } from '../components/WinOverlay';
+import { SavedToast } from '../components/SavedToast';
 import { ScalePressable } from '../components/ScalePressable';
 import { ScreenTransition } from '../components/ScreenTransition';
 
@@ -33,8 +35,11 @@ export default function GameScreen() {
   const [confirming, setConfirming] = useState<Confirming>(null);
   const [win, setWin] = useState<WinState>(null);
   const [wheelActive, setWheelActive] = useState(false);
+  const [savedToast, setSavedToast] = useState<number | null>(null);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const winTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,6 +63,7 @@ export default function GameScreen() {
     return () => {
       clearTimeout(flashTimer.current);
       clearTimeout(winTimer.current);
+      clearTimeout(toastTimer.current);
     };
   }, []);
 
@@ -113,6 +119,16 @@ export default function GameScreen() {
     };
 
     flash(outcome.record.scoreDeltaA, outcome.record.scoreDeltaB);
+
+    setSavedToast(Date.now());
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setSavedToast(null), motion.chipFloat);
+
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
 
     if (outcome.winner) {
       updatedGame.winner = outcome.winner;
@@ -184,7 +200,7 @@ export default function GameScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ header: () => <Header showBack onBack={() => router.back()} rightPill={`Giv ${handNo}`} /> }} />
-      <ScrollView contentContainerStyle={styles.scroll} scrollEnabled={!wheelActive}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} scrollEnabled={!wheelActive}>
         <ScreenTransition>
           <Scoreboard
             nameA={TEAM_LABELS.A}
@@ -321,6 +337,8 @@ export default function GameScreen() {
           </View>
         </ScreenTransition>
       </ScrollView>
+
+      <SavedToast toastKey={savedToast} />
 
       <Modal visible={!!win} animationType="none" statusBarTranslucent transparent>
         {win && (

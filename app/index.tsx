@@ -103,6 +103,15 @@ export default function HomeScreen() {
           >
             <Text style={styles.secondaryLabel}>Spelregler</Text>
           </ScalePressable>
+
+          <ScalePressable
+            style={styles.footerLink}
+            onPress={() => router.push('/privacy')}
+            accessibilityRole="button"
+            accessibilityLabel="Integritetspolicy"
+          >
+            <Text style={styles.footerLinkLabel}>Integritetspolicy</Text>
+          </ScalePressable>
         </View>
       </ScreenTransition>
     </SafeAreaView>
@@ -149,4 +158,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
+  footerLink: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  footerLinkLabel: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: colors.muted,
+    textDecorationLine: 'underline',
+  },
 });
