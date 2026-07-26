@@ -20,9 +20,17 @@ import Animated, {
 import { TeamId } from '../lib/types';
 import { colors, fonts, radii } from '../lib/theme';
 
-const ITEM_HEIGHT = 44;
-const VISIBLE_ROWS = 5;
-const WHEEL_HEIGHT = ITEM_HEIGHT * VISIBLE_ROWS;
+export const ITEM_HEIGHT = 44;
+
+// Presentational only: how many rows are visible in the wheel's window at
+// once. Must stay odd so the highlight bar sits on a centered row. This is
+// the only thing `visibleRows` affects — it has no bearing on the gesture
+// math below, which operates purely in terms of ITEM_HEIGHT and row index.
+function getWheelMetrics(visibleRows: number) {
+  const half = (visibleRows - 1) / 2;
+  return { wheelHeight: ITEM_HEIGHT * visibleRows, edgePadding: ITEM_HEIGHT * half };
+}
+
 // How long a wheel must sit still, with no finger on it, before its position
 // is committed. Commits must never happen mid-gesture: correcting the offset
 // while the user is dragging fights the finger, and committing intermediate
@@ -59,6 +67,7 @@ export interface PointsWheelPairProps {
   // outer one join the drag, so touching a wheel scrolls the whole screen.
   onInteractionStart?: () => void;
   onInteractionEnd?: () => void;
+  visibleRows?: 3 | 5;
 }
 
 export function PointsWheelPair({
@@ -74,6 +83,7 @@ export function PointsWheelPair({
   nameB,
   onInteractionStart,
   onInteractionEnd,
+  visibleRows = 5,
 }: PointsWheelPairProps) {
   return (
     <View style={styles.row}>
@@ -90,6 +100,7 @@ export function PointsWheelPair({
         accessibilityLabel={`Poäng till ${nameA}`}
         onInteractionStart={onInteractionStart}
         onInteractionEnd={onInteractionEnd}
+        visibleRows={visibleRows}
       />
       <WheelColumn
         value={pointsB}
@@ -104,6 +115,7 @@ export function PointsWheelPair({
         accessibilityLabel={`Poäng till ${nameB}`}
         onInteractionStart={onInteractionStart}
         onInteractionEnd={onInteractionEnd}
+        visibleRows={visibleRows}
       />
     </View>
   );
@@ -122,6 +134,7 @@ function WheelColumn({
   accessibilityLabel,
   onInteractionStart,
   onInteractionEnd,
+  visibleRows,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -135,7 +148,9 @@ function WheelColumn({
   accessibilityLabel: string;
   onInteractionStart?: () => void;
   onInteractionEnd?: () => void;
+  visibleRows: 3 | 5;
 }) {
+  const { wheelHeight, edgePadding } = getWheelMetrics(visibleRows);
   const scrollRef = useRef<ScrollView>(null);
   const scrollY = useSharedValue((value - min) * ITEM_HEIGHT);
   const internalIndexRef = useRef(value - min);
@@ -264,12 +279,15 @@ function WheelColumn({
         {label}
       </Animated.Text>
 
-      <View style={styles.wheel}>
-        <View pointerEvents="none" style={[styles.highlightBar, { backgroundColor: highlightColor }]} />
+      <View style={[styles.wheel, { height: wheelHeight }]}>
+        <View
+          pointerEvents="none"
+          style={[styles.highlightBar, { backgroundColor: highlightColor, top: edgePadding }]}
+        />
         <ScrollView
           ref={scrollRef}
-          style={[styles.scroll, webWheelStyle]}
-          contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
+          style={[{ height: wheelHeight }, webWheelStyle]}
+          contentContainerStyle={{ paddingVertical: edgePadding }}
           showsVerticalScrollIndicator={false}
           snapToInterval={ITEM_HEIGHT}
           decelerationRate="fast"
@@ -353,18 +371,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   wheel: {
-    height: WHEEL_HEIGHT,
     width: '100%',
     justifyContent: 'center',
-  },
-  scroll: {
-    height: WHEEL_HEIGHT,
   },
   highlightBar: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: ITEM_HEIGHT * 2,
     height: ITEM_HEIGHT,
     borderRadius: radii.chip,
   },

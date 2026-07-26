@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Platform, ScrollView, StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import { Modal, Platform, ScrollView, StyleSheet, Text, View, SafeAreaView, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -12,7 +13,7 @@ import { Scoreboard } from '../components/Scoreboard';
 import { TeamSegment } from '../components/TeamSegment';
 import { BidChips } from '../components/BidChips';
 import { Tabs } from '../components/Tabs';
-import { PointsWheelPair } from '../components/PointsWheelPair';
+import { ITEM_HEIGHT, PointsWheelPair } from '../components/PointsWheelPair';
 import { HandLogRow } from '../components/HandLogRow';
 import { InlineConfirm } from '../components/InlineConfirm';
 import { WinOverlay } from '../components/WinOverlay';
@@ -25,8 +26,27 @@ type Confirming = 'undo' | 'abandon' | null;
 type WinState = { team: TeamId; a: number; b: number } | null;
 type ScreenTab = 'round' | 'history';
 
+// Rendered height of the round tab's content up to and including the
+// bottom edge of "Spara giv", EXCLUDING the points wheel itself and
+// excluding everything below the save button (that's allowed to scroll).
+// Derived by hand from the tightened styles in this file + Scoreboard.tsx.
+// Re-derive if those styles change.
+const FIXED_CHROME_HEIGHT = 527;
+// Header.tsx: insets.top + paddingTop-extra(14) + backButton(34) + paddingBottom(12).
+const HEADER_CHROME_HEIGHT = 60;
+const ROW_COUNT_SAFETY_MARGIN = 12;
+
+function pickVisibleRows(availableBodyHeight: number): 3 | 5 {
+  const fiveRowThreshold = FIXED_CHROME_HEIGHT + ITEM_HEIGHT * 5 + ROW_COUNT_SAFETY_MARGIN;
+  return availableBodyHeight >= fiveRowThreshold ? 5 : 3;
+}
+
 export default function GameScreen() {
   const router = useRouter();
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const availableBodyHeight = windowHeight - (insets.top + HEADER_CHROME_HEIGHT) - insets.bottom;
+  const visibleRows = pickVisibleRows(availableBodyHeight);
   const [game, setGame] = useState<Game | null>(null);
   const [biddingTeam, setBiddingTeam] = useState<TeamId | null>(null);
   const [bidAmount, setBidAmount] = useState<number | null>(null);
@@ -232,13 +252,13 @@ export default function GameScreen() {
           {activeTab === 'round' ? (
             <View style={styles.formCard}>
               <Text style={styles.sectionTitle}>Vem bjöd?</Text>
-              <View style={{ marginTop: 10 }}>
+              <View style={{ marginTop: 8 }}>
                 <TeamSegment value={biddingTeam} onChange={setBiddingTeam} nameA={TEAM_LABELS.A} nameB={TEAM_LABELS.B} />
               </View>
 
               <DimmedSection active={!!biddingTeam}>
-                <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Bud</Text>
-                <View style={{ marginTop: 10 }}>
+                <Text style={[styles.sectionTitle, { marginTop: 14 }]}>Bud</Text>
+                <View style={{ marginTop: 8 }}>
                   {bidAmount == null || bidEditing ? (
                     <BidChips
                       value={bidAmount}
@@ -292,8 +312,8 @@ export default function GameScreen() {
                   </ScalePressable>
                 )}
 
-                <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Poäng</Text>
-                <View style={{ marginTop: 10 }}>
+                <Text style={[styles.sectionTitle, { marginTop: 14 }]}>Poäng</Text>
+                <View style={{ marginTop: 8 }}>
                   <PointsWheelPair
                     pointsA={pointsA}
                     pointsB={pointsB}
@@ -307,6 +327,7 @@ export default function GameScreen() {
                     nameB={TEAM_LABELS.B}
                     onInteractionStart={() => setWheelActive(true)}
                     onInteractionEnd={() => setWheelActive(false)}
+                    visibleRows={visibleRows}
                   />
                 </View>
               </DimmedSection>
@@ -415,14 +436,14 @@ function DimmedSection({ active, children }: { active: boolean; children: React.
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   loading: { color: colors.muted, textAlign: 'center', marginTop: 40, fontFamily: fonts.medium },
-  scroll: { padding: 16, paddingBottom: 40 },
-  tabsWrap: { marginTop: 14 },
+  scroll: { padding: 16, paddingBottom: 24 },
+  tabsWrap: { marginTop: 10 },
   formCard: {
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: radii.cardLg,
-    padding: 18,
+    padding: 16,
     marginTop: 10,
     ...shadows.card,
   },
@@ -446,7 +467,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   bidEditLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
-  checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
   checkbox: {
     width: 22,
     height: 22,
@@ -459,10 +480,10 @@ const styles = StyleSheet.create({
   checkboxLabel: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.muted, lineHeight: 18 },
   saveButton: {
     width: '100%',
-    marginTop: 28,
+    marginTop: 16,
     backgroundColor: colors.feltGreen,
     borderRadius: radii.button,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     ...shadows.primaryButton,
   },
