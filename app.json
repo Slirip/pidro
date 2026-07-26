@@ -3,7 +3,7 @@
     "name": "Pidro",
     "slug": "pidro-app",
     "owner": "slirip",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "scheme": "pidroapp",
